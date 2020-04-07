@@ -96,7 +96,7 @@ class Analyzer {
     this.canvas.style.display = 'none';
     this.canvasContext = null;
 
-    this.decodeCallback = ZXing.Runtime.addFunction(function (ptr, len, resultIndex, resultCount) {
+    this.decodeCallback = ZXing.addFunction(function (ptr, len, resultIndex, resultCount) {
       let result = new Uint8Array(ZXing.HEAPU8.buffer, ptr, len);
       let str = String.fromCharCode.apply(null, result);
       if (resultIndex === 0) {
@@ -138,12 +138,11 @@ class Analyzer {
 
     let data = this.canvasContext.getImageData(0, 0, this.sensorWidth, this.sensorHeight).data;
     for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      let [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-      ZXing.HEAPU8[this.imageBuffer + j] = Math.trunc((r + g + b) / 3);
+      ZXing.HEAPU8[this.imageBuffer + j] = (data[i] * 66 + data[i + 1] * 129 + data[i + 2] * 25 + 4096) >> 8;
     }
 
-    let err = ZXing._decode_qr(this.decodeCallback);
-    if (err) {
+    let err = ZXing._decode_any(this.decodeCallback);
+    if (err && err != -2) {
       return null;
     }
 
